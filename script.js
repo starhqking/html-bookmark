@@ -10,6 +10,9 @@ class BookmarkManager {
         this.selectedTags = [];
         this.editingBookmark = null;
         this.currentView = 'list'; // 'list' 或 'card'
+        this.currentPage = 1;
+        this.pageSize = 20;
+        this.totalPages = 1;
         
         this.init();
     }
@@ -22,6 +25,7 @@ class BookmarkManager {
         this.renderBookmarks();
         this.applyTheme(this.currentTheme);
         this.updateViewButtons();
+        this.updatePageSizeSelect();
     }
 
     // 数据管理
@@ -35,6 +39,7 @@ class BookmarkManager {
             this.currentTheme = data.currentTheme || 'light';
             this.customThemes = data.customThemes || [];
             this.currentView = data.currentView || 'list';
+            this.pageSize = data.pageSize || 20;
         } else {
             // 初始化默认数据
             this.initDefaultData();
@@ -48,7 +53,8 @@ class BookmarkManager {
             tags: this.tags,
             currentTheme: this.currentTheme,
             customThemes: this.customThemes,
-            currentView: this.currentView
+            currentView: this.currentView,
+            pageSize: this.pageSize
         };
         localStorage.setItem('bookmarkData', JSON.stringify(data));
     }
@@ -210,6 +216,28 @@ class BookmarkManager {
 
         document.getElementById('card-view-btn').addEventListener('click', () => {
             this.switchView('card');
+        });
+
+        // 每页显示数量变更
+        document.getElementById('page-size-select').addEventListener('change', (e) => {
+            this.changePageSize(parseInt(e.target.value));
+        });
+
+        // 分页控件事件
+        document.getElementById('first-page').addEventListener('click', () => {
+            this.goToPage(1);
+        });
+
+        document.getElementById('prev-page').addEventListener('click', () => {
+            this.goToPage(this.currentPage - 1);
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            this.goToPage(this.currentPage + 1);
+        });
+
+        document.getElementById('last-page').addEventListener('click', () => {
+            this.goToPage(this.totalPages);
         });
 
         // 点击外部关闭面板
@@ -800,7 +828,23 @@ class BookmarkManager {
 
     renderBookmarks() {
         const container = document.getElementById('bookmark-list');
-        let bookmarks = this.getFilteredBookmarks();
+        let allBookmarks = this.getFilteredBookmarks();
+
+        // 计算分页信息
+        this.totalPages = Math.ceil(allBookmarks.length / this.pageSize);
+        
+        // 确保当前页码在有效范围内
+        if (this.currentPage > this.totalPages) {
+            this.currentPage = Math.max(1, this.totalPages);
+        }
+
+        // 获取当前页的书签
+        const startIndex = (this.currentPage - 1) * this.pageSize;
+        const endIndex = startIndex + this.pageSize;
+        const bookmarks = allBookmarks.slice(startIndex, endIndex);
+
+        // 更新分页控件
+        this.updatePaginationControls(allBookmarks.length);
 
         // 添加切换动画
         container.classList.add('switching');
@@ -809,7 +853,7 @@ class BookmarkManager {
             // 设置容器类名
             container.className = this.currentView === 'card' ? 'bookmark-card-view' : 'bookmark-list-view';
 
-            if (bookmarks.length === 0) {
+            if (allBookmarks.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state col-span-full">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -940,6 +984,17 @@ class BookmarkManager {
     getFilteredBookmarks() {
         let bookmarks = [...this.bookmarks];
 
+        // 搜索筛选
+        const searchQuery = document.getElementById('search-input').value.trim();
+        if (searchQuery) {
+            bookmarks = bookmarks.filter(bookmark =>
+                bookmark.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                bookmark.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                bookmark.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                bookmark.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+            );
+        }
+
         // 按分类筛选
         if (this.selectedCategory) {
             bookmarks = bookmarks.filter(bookmark => bookmark.categoryId === this.selectedCategory);
@@ -952,57 +1007,8 @@ class BookmarkManager {
             );
         }
 
-        return bookmarks;
-    }
-
-    searchBookmarks(query) {
-        const container = document.getElementById('bookmark-list');
-        if (!query.trim()) {
-            this.renderBookmarks();
-            return;
-        }
-
-        const filteredBookmarks = this.bookmarks.filter(bookmark =>
-            bookmark.name.toLowerCase().includes(query.toLowerCase()) ||
-            bookmark.description.toLowerCase().includes(query.toLowerCase()) ||
-            bookmark.url.toLowerCase().includes(query.toLowerCase()) ||
-            bookmark.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
-        );
-
-        // 添加切换动画
-        container.classList.add('switching');
-        
-        setTimeout(() => {
-            // 设置容器类名
-            container.className = this.currentView === 'card' ? 'bookmark-card-view' : 'bookmark-list-view';
-            
-            if (filteredBookmarks.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state col-span-full">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <h3 class="text-lg font-medium mb-2">未找到匹配的书签</h3>
-                        <p class="text-sm">尝试使用不同的关键词搜索</p>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = '';
-                filteredBookmarks.forEach((bookmark, index) => {
-                    const bookmarkElement = this.createBookmarkElement(bookmark);
-                    bookmarkElement.style.animationDelay = `${index * 0.05}s`;
-                    container.appendChild(bookmarkElement);
-                });
-            }
-            
-            container.classList.remove('switching');
-        }, 150);
-    }
-
-    sortBookmarks(sortBy) {
-        const container = document.getElementById('bookmark-list');
-        let bookmarks = this.getFilteredBookmarks();
-
+        // 排序
+        const sortBy = document.getElementById('sort-select').value;
         switch (sortBy) {
             case 'name':
                 bookmarks.sort((a, b) => a.name.localeCompare(b.name));
@@ -1019,22 +1025,24 @@ class BookmarkManager {
                 break;
         }
 
-        // 添加切换动画
-        container.classList.add('switching');
-        
-        setTimeout(() => {
-            // 设置容器类名
-            container.className = this.currentView === 'card' ? 'bookmark-card-view' : 'bookmark-list-view';
-            
-            container.innerHTML = '';
-            bookmarks.forEach((bookmark, index) => {
-                const bookmarkElement = this.createBookmarkElement(bookmark);
-                bookmarkElement.style.animationDelay = `${index * 0.05}s`;
-                container.appendChild(bookmarkElement);
-            });
-            
-            container.classList.remove('switching');
-        }, 150);
+        return bookmarks;
+    }
+
+    searchBookmarks(query) {
+        if (!query.trim()) {
+            this.renderBookmarks();
+            return;
+        }
+
+        // 重置到第一页
+        this.currentPage = 1;
+        this.renderBookmarks();
+    }
+
+    sortBookmarks(sortBy) {
+        // 重置到第一页
+        this.currentPage = 1;
+        this.renderBookmarks();
     }
 
     updateCategorySelect() {
@@ -1078,6 +1086,114 @@ class BookmarkManager {
         
         listBtn.classList.toggle('active', this.currentView === 'list');
         cardBtn.classList.toggle('active', this.currentView === 'card');
+    }
+
+    updatePageSizeSelect() {
+        const select = document.getElementById('page-size-select');
+        select.value = this.pageSize;
+    }
+
+    // 分页功能
+    updatePaginationControls(totalCount) {
+        const paginationContainer = document.getElementById('pagination-container');
+        const totalCountSpan = document.getElementById('total-count');
+        const currentPageSpan = document.getElementById('current-page');
+        const totalPagesSpan = document.getElementById('total-pages');
+        const pageNumbersContainer = document.getElementById('page-numbers');
+
+        // 更新统计信息
+        totalCountSpan.textContent = totalCount;
+        currentPageSpan.textContent = this.currentPage;
+        totalPagesSpan.textContent = this.totalPages;
+
+        // 显示或隐藏分页控件
+        if (this.totalPages <= 1) {
+            paginationContainer.classList.add('hidden');
+            return;
+        } else {
+            paginationContainer.classList.remove('hidden');
+        }
+
+        // 更新按钮状态
+        document.getElementById('first-page').disabled = this.currentPage === 1;
+        document.getElementById('prev-page').disabled = this.currentPage === 1;
+        document.getElementById('next-page').disabled = this.currentPage === this.totalPages;
+        document.getElementById('last-page').disabled = this.currentPage === this.totalPages;
+
+        // 生成页码按钮
+        this.generatePageNumbers(pageNumbersContainer);
+    }
+
+    generatePageNumbers(container) {
+        container.innerHTML = '';
+        
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+        
+        // 调整起始页，确保显示足够的页码
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        // 如果起始页大于1，显示省略号
+        if (startPage > 1) {
+            this.createPageButton(container, 1, '1');
+            if (startPage > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.className = 'px-2 text-secondary-enhanced';
+                container.appendChild(ellipsis);
+            }
+        }
+
+        // 生成页码按钮
+        for (let i = startPage; i <= endPage; i++) {
+            this.createPageButton(container, i, i.toString());
+        }
+
+        // 如果结束页小于总页数，显示省略号
+        if (endPage < this.totalPages) {
+            if (endPage < this.totalPages - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.className = 'px-2 text-secondary-enhanced';
+                container.appendChild(ellipsis);
+            }
+            this.createPageButton(container, this.totalPages, this.totalPages.toString());
+        }
+    }
+
+    createPageButton(container, pageNumber, text) {
+        const button = document.createElement('button');
+        button.className = `pagination-btn page-number-btn ${pageNumber === this.currentPage ? 'active' : ''}`;
+        button.textContent = text;
+        button.addEventListener('click', () => {
+            this.goToPage(pageNumber);
+        });
+        container.appendChild(button);
+    }
+
+    goToPage(pageNumber) {
+        if (pageNumber < 1 || pageNumber > this.totalPages || pageNumber === this.currentPage) {
+            return;
+        }
+        
+        this.currentPage = pageNumber;
+        this.renderBookmarks();
+        
+        // 滚动到顶部
+        document.getElementById('bookmark-list').scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }
+
+    changePageSize(newSize) {
+        this.pageSize = newSize;
+        this.currentPage = 1; // 重置到第一页
+        this.saveData();
+        this.renderBookmarks();
     }
 
     showNotification(message, type = 'info') {

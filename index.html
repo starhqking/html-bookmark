@@ -159,6 +159,16 @@
                                     </button>
                                 </div>
                                 
+                                <!-- 每页显示数量 -->
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-secondary-enhanced">每页:</span>
+                                    <select id="page-size-select" class="px-3 py-1 rounded-lg border border-white/30 text-sm" style="background: var(--input-bg); color: var(--input-text);">
+                                        <option value="20">20条</option>
+                                        <option value="30">30条</option>
+                                        <option value="50">50条</option>
+                                    </select>
+                                </div>
+                                
                                 <div class="flex items-center space-x-2">
                                     <span class="text-sm text-secondary-enhanced">排序:</span>
                                     <select id="sort-select" class="px-3 py-1 rounded-lg border border-white/30 text-sm" style="background: var(--input-bg); color: var(--input-text);">
@@ -171,6 +181,35 @@
                         </div>
                         <div id="bookmark-list" class="space-y-3">
                             <!-- 书签列表将在这里动态生成 -->
+                        </div>
+                        
+                        <!-- 分页控件 -->
+                        <div id="pagination-container" class="hidden mt-8 flex items-center justify-between">
+                            <div class="flex items-center space-x-2 text-sm text-secondary-enhanced">
+                                <span>共 <span id="total-count">0</span> 个书签</span>
+                                <span>|</span>
+                                <span>第 <span id="current-page">1</span> 页，共 <span id="total-pages">1</span> 页</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <button id="first-page" class="pagination-btn px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all text-sm" disabled>
+                                    首页
+                                </button>
+                                <button id="prev-page" class="pagination-btn px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all text-sm" disabled>
+                                    上一页
+                                </button>
+                                
+                                <div id="page-numbers" class="flex items-center space-x-1">
+                                    <!-- 页码按钮将在这里动态生成 -->
+                                </div>
+                                
+                                <button id="next-page" class="pagination-btn px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all text-sm">
+                                    下一页
+                                </button>
+                                <button id="last-page" class="pagination-btn px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all text-sm">
+                                    末页
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
