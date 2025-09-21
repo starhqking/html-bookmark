@@ -1049,15 +1049,26 @@ class BookmarkManager {
         const select = document.getElementById('bookmark-category');
         select.innerHTML = '<option value="">选择分类</option>';
 
-        const addOptions = (categories, prefix = '') => {
+        const addOptions = (categories, level = 0) => {
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.id;
+                
+                // 根据层级添加不同的缩进和前缀
+                let prefix = '';
+                if (level === 0) {
+                    prefix = '📁 '; // 一级分类使用文件夹图标
+                } else if (level === 1) {
+                    prefix = '　├─ '; // 二级分类使用树形结构符号
+                } else if (level === 2) {
+                    prefix = '　　└─ '; // 三级分类使用更深的缩进
+                }
+                
                 option.textContent = prefix + category.name;
                 select.appendChild(option);
 
-                if (category.children) {
-                    addOptions(category.children, prefix + '  ');
+                if (category.children && category.children.length > 0) {
+                    addOptions(category.children, level + 1);
                 }
             });
         };
