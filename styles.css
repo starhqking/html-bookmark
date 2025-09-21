@@ -161,6 +161,207 @@ body {
     box-shadow: 0 8px 25px var(--shadow-color);
 }
 
+/* 视图切换按钮样式 */
+.view-toggle-btn {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.view-toggle-btn:hover {
+    opacity: 1;
+    background: var(--glass-bg);
+}
+
+.view-toggle-btn.active {
+    background: var(--primary-color);
+    color: white;
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* 列表视图样式 */
+.bookmark-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bookmark-list-view .bookmark-card {
+    width: 100%;
+}
+
+/* 卡片瀑布流视图样式 */
+.bookmark-card-view {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.bookmark-card-view .bookmark-card {
+    break-inside: avoid;
+    height: fit-content;
+}
+
+/* 卡片视图中的书签卡片样式 */
+.bookmark-card-view .bookmark-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 180px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-actions {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-favicon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    border-radius: 6px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-description {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    opacity: 0.8;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-url {
+    font-size: 12px;
+    opacity: 0.6;
+    word-break: break-all;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.bookmark-card-view .bookmark-card .bookmark-tags .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .bookmark-card-view {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .bookmark-card-view {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 10px;
+    }
+    
+    .bookmark-card-view .bookmark-card {
+        min-height: 160px;
+        padding: 12px;
+    }
+    
+    .bookmark-card-view .bookmark-card .bookmark-favicon {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+    }
+    
+    .bookmark-card-view .bookmark-card .bookmark-title {
+        font-size: 15px;
+    }
+    
+    .bookmark-card-view .bookmark-card .bookmark-description {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bookmark-card-view {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .bookmark-card-view .bookmark-card {
+        min-height: 140px;
+        padding: 10px;
+    }
+    
+    /* 移动端视图切换按钮优化 */
+    .flex.items-center.space-x-4 {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+    
+    .flex.items-center.space-x-4 > div {
+        margin: 0;
+    }
+}
+
+/* 瀑布流动画效果 */
+.bookmark-card-view .bookmark-card {
+    animation: cardFadeIn 0.4s ease-out;
+}
+
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 视图切换动画 */
+.bookmark-container {
+    transition: all 0.3s ease;
+}
+
+.bookmark-container.switching {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
 /* 分类树样式 */
 .category-item {
     padding: 8px 12px;

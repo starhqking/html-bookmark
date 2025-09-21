@@ -144,13 +144,29 @@
                     <div class="bg-white/30 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-lg font-semibold text-enhanced">书签列表</h2>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm text-secondary-enhanced">排序:</span>
-                                <select id="sort-select" class="px-3 py-1 rounded-lg border border-white/30 text-sm" style="background: var(--input-bg); color: var(--input-text);">
-                                    <option value="name">名称</option>
-                                    <option value="date">添加时间</option>
-                                    <option value="category">分类</option>
-                                </select>
+                            <div class="flex items-center space-x-4">
+                                <!-- 视图切换按钮 -->
+                                <div class="flex items-center space-x-1 bg-white/20 rounded-lg p-1">
+                                    <button id="list-view-btn" class="view-toggle-btn active p-2 rounded-md transition-all duration-200" data-view="list" title="列表视图">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                        </svg>
+                                    </button>
+                                    <button id="card-view-btn" class="view-toggle-btn p-2 rounded-md transition-all duration-200" data-view="card" title="卡片视图">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM14 15a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1v-2z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-secondary-enhanced">排序:</span>
+                                    <select id="sort-select" class="px-3 py-1 rounded-lg border border-white/30 text-sm" style="background: var(--input-bg); color: var(--input-text);">
+                                        <option value="name">名称</option>
+                                        <option value="date">添加时间</option>
+                                        <option value="category">分类</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div id="bookmark-list" class="space-y-3">

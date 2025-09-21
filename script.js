@@ -9,6 +9,7 @@ class BookmarkManager {
         this.selectedCategory = null;
         this.selectedTags = [];
         this.editingBookmark = null;
+        this.currentView = 'list'; // 'list' 或 'card'
         
         this.init();
     }
@@ -20,6 +21,7 @@ class BookmarkManager {
         this.renderTags();
         this.renderBookmarks();
         this.applyTheme(this.currentTheme);
+        this.updateViewButtons();
     }
 
     // 数据管理
@@ -32,6 +34,7 @@ class BookmarkManager {
             this.tags = data.tags || [];
             this.currentTheme = data.currentTheme || 'light';
             this.customThemes = data.customThemes || [];
+            this.currentView = data.currentView || 'list';
         } else {
             // 初始化默认数据
             this.initDefaultData();
@@ -44,7 +47,8 @@ class BookmarkManager {
             categories: this.categories,
             tags: this.tags,
             currentTheme: this.currentTheme,
-            customThemes: this.customThemes
+            customThemes: this.customThemes,
+            currentView: this.currentView
         };
         localStorage.setItem('bookmarkData', JSON.stringify(data));
     }
@@ -197,6 +201,15 @@ class BookmarkManager {
         // 文件导入
         document.getElementById('import-file-input').addEventListener('change', (e) => {
             this.handleFileImport(e);
+        });
+
+        // 视图切换
+        document.getElementById('list-view-btn').addEventListener('click', () => {
+            this.switchView('list');
+        });
+
+        document.getElementById('card-view-btn').addEventListener('click', () => {
+            this.switchView('card');
         });
 
         // 点击外部关闭面板
@@ -789,24 +802,37 @@ class BookmarkManager {
         const container = document.getElementById('bookmark-list');
         let bookmarks = this.getFilteredBookmarks();
 
-        if (bookmarks.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                    </svg>
-                    <h3 class="text-lg font-medium mb-2">暂无书签</h3>
-                    <p class="text-sm">点击"添加书签"开始收藏您喜欢的网站</p>
-                </div>
-            `;
-            return;
-        }
+        // 添加切换动画
+        container.classList.add('switching');
+        
+        setTimeout(() => {
+            // 设置容器类名
+            container.className = this.currentView === 'card' ? 'bookmark-card-view' : 'bookmark-list-view';
 
-        container.innerHTML = '';
-        bookmarks.forEach(bookmark => {
-            const bookmarkElement = this.createBookmarkElement(bookmark);
-            container.appendChild(bookmarkElement);
-        });
+            if (bookmarks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state col-span-full">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium mb-2">暂无书签</h3>
+                        <p class="text-sm">点击"添加书签"开始收藏您喜欢的网站</p>
+                    </div>
+                `;
+                container.classList.remove('switching');
+                return;
+            }
+
+            container.innerHTML = '';
+            bookmarks.forEach((bookmark, index) => {
+                const bookmarkElement = this.createBookmarkElement(bookmark);
+                // 添加延迟动画效果
+                bookmarkElement.style.animationDelay = `${index * 0.05}s`;
+                container.appendChild(bookmarkElement);
+            });
+            
+            container.classList.remove('switching');
+        }, 150);
     }
 
     createBookmarkElement(bookmark) {
@@ -818,38 +844,80 @@ class BookmarkManager {
             `<span class="tag">${tag}</span>`
         ).join('');
 
-        element.innerHTML = `
-            <div class="flex items-start justify-between">
-                <div class="flex items-start space-x-3 flex-1">
-                    <img src="${bookmark.favicon}" alt="favicon" class="w-4 h-4 mt-1 flex-shrink-0" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23666%22><path d=%22M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z%22/></svg>'">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-semibold text-enhanced truncate">
+        if (this.currentView === 'card') {
+            // 卡片视图布局
+            element.innerHTML = `
+                <div class="bookmark-header">
+                    <img src="${bookmark.favicon}" alt="favicon" class="bookmark-favicon" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23666%22><path d=%22M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z%22/></svg>'">
+                    <div class="bookmark-content">
+                        <h3 class="bookmark-title text-enhanced">
                             <a href="${bookmark.url}" target="_blank" class="hover:text-blue-400 transition-colors">
                                 ${bookmark.name}
                             </a>
                         </h3>
-                        ${bookmark.description ? `<p class="text-sm text-secondary-enhanced mt-1">${bookmark.description}</p>` : ''}
-                        <div class="flex items-center space-x-2 mt-2">
-                            ${categoryName ? `<span class="text-xs text-muted-enhanced">📁 ${categoryName}</span>` : ''}
-                            <span class="text-xs text-muted-enhanced">${new Date(bookmark.dateAdded).toLocaleDateString()}</span>
-                        </div>
-                        ${tagsHTML ? `<div class="flex flex-wrap gap-1 mt-2">${tagsHTML}</div>` : ''}
                     </div>
                 </div>
-                <div class="flex items-center space-x-2 ml-4">
-                    <button class="edit-bookmark p-1 rounded-lg hover:bg-white/20 transition-all" data-id="${bookmark.id}">
+                
+                ${bookmark.description ? `<p class="bookmark-description text-secondary-enhanced">${bookmark.description}</p>` : ''}
+                
+                <div class="bookmark-meta">
+                    <div class="bookmark-url text-muted-enhanced">${bookmark.url}</div>
+                    <div class="flex items-center justify-between text-xs text-muted-enhanced">
+                        ${categoryName ? `<span>📁 ${categoryName}</span>` : '<span></span>'}
+                        <span>${new Date(bookmark.dateAdded).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                
+                ${tagsHTML ? `<div class="bookmark-tags">${tagsHTML}</div>` : ''}
+                
+                <div class="bookmark-actions">
+                    <button class="edit-bookmark p-2 rounded-lg hover:bg-white/20 transition-all" data-id="${bookmark.id}" title="编辑">
                         <svg class="h-4 w-4 text-secondary-enhanced" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
-                    <button class="delete-bookmark p-1 rounded-lg hover:bg-red-200/50 transition-all" data-id="${bookmark.id}">
+                    <button class="delete-bookmark p-2 rounded-lg hover:bg-red-200/50 transition-all" data-id="${bookmark.id}" title="删除">
                         <svg class="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // 列表视图布局（原有布局）
+            element.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3 flex-1">
+                        <img src="${bookmark.favicon}" alt="favicon" class="w-4 h-4 mt-1 flex-shrink-0" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23666%22><path d=%22M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z%22/></svg>'">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-semibold text-enhanced truncate">
+                                <a href="${bookmark.url}" target="_blank" class="hover:text-blue-400 transition-colors">
+                                    ${bookmark.name}
+                                </a>
+                            </h3>
+                            ${bookmark.description ? `<p class="text-sm text-secondary-enhanced mt-1">${bookmark.description}</p>` : ''}
+                            <div class="flex items-center space-x-2 mt-2">
+                                ${categoryName ? `<span class="text-xs text-muted-enhanced">📁 ${categoryName}</span>` : ''}
+                                <span class="text-xs text-muted-enhanced">${new Date(bookmark.dateAdded).toLocaleDateString()}</span>
+                            </div>
+                            ${tagsHTML ? `<div class="flex flex-wrap gap-1 mt-2">${tagsHTML}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 ml-4">
+                        <button class="edit-bookmark p-1 rounded-lg hover:bg-white/20 transition-all" data-id="${bookmark.id}">
+                            <svg class="h-4 w-4 text-secondary-enhanced" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button class="delete-bookmark p-1 rounded-lg hover:bg-red-200/50 transition-all" data-id="${bookmark.id}">
+                            <svg class="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
 
         // 添加事件监听器
         element.querySelector('.edit-bookmark').addEventListener('click', () => {
@@ -901,23 +969,34 @@ class BookmarkManager {
             bookmark.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
         );
 
-        container.innerHTML = '';
-        if (filteredBookmarks.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <h3 class="text-lg font-medium mb-2">未找到匹配的书签</h3>
-                    <p class="text-sm">尝试使用不同的关键词搜索</p>
-                </div>
-            `;
-        } else {
-            filteredBookmarks.forEach(bookmark => {
-                const bookmarkElement = this.createBookmarkElement(bookmark);
-                container.appendChild(bookmarkElement);
-            });
-        }
+        // 添加切换动画
+        container.classList.add('switching');
+        
+        setTimeout(() => {
+            // 设置容器类名
+            container.className = this.currentView === 'card' ? 'bookmark-card-view' : 'bookmark-list-view';
+            
+            if (filteredBookmarks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state col-span-full">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium mb-2">未找到匹配的书签</h3>
+                        <p class="text-sm">尝试使用不同的关键词搜索</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '';
+                filteredBookmarks.forEach((bookmark, index) => {
+                    const bookmarkElement = this.createBookmarkElement(bookmark);
+                    bookmarkElement.style.animationDelay = `${index * 0.05}s`;
+                    container.appendChild(bookmarkElement);
+                });
+            }
+            
+            container.classList.remove('switching');
+        }, 150);
     }
 
     sortBookmarks(sortBy) {
@@ -940,11 +1019,22 @@ class BookmarkManager {
                 break;
         }
 
-        container.innerHTML = '';
-        bookmarks.forEach(bookmark => {
-            const bookmarkElement = this.createBookmarkElement(bookmark);
-            container.appendChild(bookmarkElement);
-        });
+        // 添加切换动画
+        container.classList.add('switching');
+        
+        setTimeout(() => {
+            // 设置容器类名
+            container.className = this.currentView === 'card' ? 'bookmark-card-view' : 'bookmark-list-view';
+            
+            container.innerHTML = '';
+            bookmarks.forEach((bookmark, index) => {
+                const bookmarkElement = this.createBookmarkElement(bookmark);
+                bookmarkElement.style.animationDelay = `${index * 0.05}s`;
+                container.appendChild(bookmarkElement);
+            });
+            
+            container.classList.remove('switching');
+        }, 150);
     }
 
     updateCategorySelect() {
@@ -970,6 +1060,24 @@ class BookmarkManager {
     // 工具函数
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    // 视图切换功能
+    switchView(viewType) {
+        if (this.currentView === viewType) return;
+        
+        this.currentView = viewType;
+        this.updateViewButtons();
+        this.renderBookmarks();
+        this.saveData();
+    }
+
+    updateViewButtons() {
+        const listBtn = document.getElementById('list-view-btn');
+        const cardBtn = document.getElementById('card-view-btn');
+        
+        listBtn.classList.toggle('active', this.currentView === 'list');
+        cardBtn.classList.toggle('active', this.currentView === 'card');
     }
 
     showNotification(message, type = 'info') {
